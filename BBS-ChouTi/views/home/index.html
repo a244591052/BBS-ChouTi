@@ -620,6 +620,13 @@
             var $comment_area = $("#comment_area_" + nid);
 //            如果隐藏则打开，如果打开则隐藏
             if($comment_area.hasClass('hide')){
+//                将评论回复区重置为无回复状态
+                var $reply = $('#reply_id_' + nid);
+                $reply.removeAttr("target");
+                $reply.text("");
+//              显示父元素   （回复：）父元素display的初始值为none
+                $reply.parent().css('display','none');
+
                 $comment_area.removeClass('hide');
                 var $comment_list = $("#comment_list_" + nid);
                 $.ajax({
@@ -654,7 +661,9 @@
         发布评论
          */
         function DoComment(nid){
+//            获取评论内容
             var content = $("#comment_content_"+nid).val();
+//            去底部的回复标签获取回复评论的id
             var reply_id = $("#reply_id_"+nid).attr('target');
 
             if($('#action_nav').attr('is-login') == 'true'){
@@ -668,7 +677,9 @@
                         console.log(arg);
                         if(arg.status){
                             $('#comment_content_' + arg.data.news_id).val('');
+//                            这里有个小bug，就是根评论的时候会缩进16px，已改进：需要判断是不是根评论来决定是否需要缩进
                             var a = '<ul><li class="items" style="padding:8px 0 0 16px;"><span class="folder" id="comment_folder_';
+                            var a_root = '<ul><li class="items" style="padding:8px 0 0 0;"><span class="folder" id="comment_folder_';
                             var b = arg.data.nid;
                             var c = '"><div class="comment-L comment-L-top"><a href="#" class="icons zhan-ico"></a><a href="/user/moyujian/submitted/1"><img src="/statics/images/1.jpg"></a></div><div class="comment-R comment-R-top" style="background-color: rgb(246, 246, 246);"><div class="pp"><a class="name" href="/user/moyujian/submitted/1">';
                             var d = arg.data.username;
@@ -679,14 +690,21 @@
                             var i = '</span></div><div class="comment-line-top"><div class="comment-state"><a class="ding" href="javascript:void(0);"><b>顶</b><span class="ding-num">[0]</span></a><a class="cai" href="javascript:void(0);"><b>踩</b><span class="cai-num">[0]</span></a><span class="line-huifu">|</span> <a class="see-a jubao" href="javascript:void(0);">举报</a> <span class="line-huifu">|</span> <a class="see-a huifu-a" href="javascript:void(0);" onclick="';
                             var j = "reply(" + arg.data.news_id + "," +arg.data.nid+",'"+arg.data.username+"')";
                             var k = '">回复</a></div></div></div></span></li></ul>';
-                            var tag = a+b+c+d+e+f+g+h+i+j+k;
                             console.log(arg,tag);
+//                            如果是非根评论则在回复评论的id下显示
                             if(arg.data.reply_id){
+                                var tag = a+b+c+d+e+f+g+h+i+j+k;
                                 $comment_folder = $('#comment_folder_' + arg.data.reply_id);
                                 $comment_folder.after(tag);
+//                            如果是根评论则在最后显示
                             }else{
+                                var tag = a_root+b+c+d+e+f+g+h+i+j+k;
                                 $('#comment_list_'+arg.data.news_id).append(tag);
                             }
+//                            将评论数+1
+                            var comment_count = $('#comment_count_'+ arg.data.news_id);
+                            var num = parseInt(comment_count.text());
+                            comment_count.text(num + 1);
 
 
                         }else{
@@ -698,6 +716,20 @@
                 $('#accountDialog').removeClass('hide');
                 $('.shadow').removeClass('hide');
             }
+        }
+
+        /**
+         * 回复评论
+         * @param news_id
+         * @param comment_id
+         * @param username
+         */
+        function reply(news_id, comment_id, username){
+            var $reply = $('#reply_id_' + news_id);
+            $reply.attr('target', comment_id);
+            $reply.text(username);
+//            显示父元素   （回复：）父元素display的初始值为none
+            $reply.parent().css('display','block');
         }
 
         /*
@@ -713,9 +745,11 @@
                     dataType: 'json',
                     success: function(arg){
                         if(arg.status){
+//                            获取点赞量
                             var $favorCount = $('#favor_count_'+nid);
                             var c = parseInt($favorCount.text());
                             if(arg.code == 2301){
+//                                如果未点过赞，则点赞量+1
                                 $favorCount.text(c + 1);
                                 $(ths).find('span').addClass('active');
                                 AddFavorAnimation(ths);
@@ -748,6 +782,7 @@
             var opacity = 1;
             var tag = document.createElement('i');
             tag.innerText = "+1";
+//            每一个新闻item都是一个relative
             tag.style.position = 'absolute';
             tag.style.top = offsetTop + 'px';
             tag.style.left = offsetLeft + 'px';
@@ -756,6 +791,7 @@
             $(ths).append(tag);
 
             var addInterval = setInterval(function(){
+//                不断往上往右移动，直到透明度小于0.5时消失
                     fontSize += 5;
                     offsetTop -= 15;
                     offsetLeft += 5;
@@ -804,17 +840,6 @@
             },40)
         }
 
-        /**
-         * 回复评论
-         * @param news_id
-         * @param comment_id
-         * @param username
-         */
-        function reply(news_id, comment_id, username){
-            var $reply = $('#reply_id_' + news_id);
-            $reply.attr('target', comment_id);
-            $reply.text(username);
-            $reply.parent().css('display','block');
-        }
+
     </script>
 {% end %}

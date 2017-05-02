@@ -143,6 +143,7 @@ class CommentHandler(BaseRequestHandler):
                               ctime=datetime.datetime.now())
 
             conn.add(obj)
+            # 获取nid
             conn.flush()
             conn.refresh(obj)
 
@@ -155,7 +156,7 @@ class CommentHandler(BaseRequestHandler):
                 'reply_id': obj.reply_id,
                 'content': obj.content,
             }
-
+            # 将评论数+1
             conn.query(ORM.News).filter(ORM.News.nid == form._value_dict['news_id']).update(
                 {"comment_count": ORM.News.comment_count + 1}, synchronize_session="evaluate")
             conn.commit()
@@ -173,15 +174,17 @@ class FavorHandler(BaseRequestHandler):
     @decrator.auth_login_json
     def post(self, *args, **kwargs):
         rep = BaseResponse()
-
+        # 获取用户点赞的新闻id
         news_id = self.get_argument('news_id', None)
         if not news_id:
             rep.summary = "新闻ID不能为空."
         else:
+            # 获取用户的nid
             user_info_id = self.session['user_info']['nid']
             conn = ORM.session()
             has_favor = conn.query(ORM.Favor).filter(ORM.Favor.user_info_id == user_info_id,
                                                      ORM.Favor.news_id == news_id).count()
+            # 如果已经点过赞，则删掉原来那一条数据并点赞量减一
             if has_favor:
                 conn.query(ORM.Favor).filter(ORM.Favor.user_info_id == user_info_id,
                                              ORM.Favor.news_id == news_id).delete()
