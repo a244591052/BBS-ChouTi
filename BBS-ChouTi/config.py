@@ -2,8 +2,8 @@
 # -*- coding:utf-8 -*-
 
 # Session类型：cache/redis/memcached
-SESSION_TYPE = "cache"
+SESSION_TYPE = "memcached"
 # Session超时时间（秒）
-SESSION_EXPIRES = 60 * 20
+SESSION_EXPIRES = 20*60
 
 LOGIN_URL = '/login'

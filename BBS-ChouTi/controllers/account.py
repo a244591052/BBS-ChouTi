@@ -50,8 +50,14 @@ class LoginHandler(BaseRequestHandler):
                 self.write(json.dumps(rep.__dict__))
                 return
 
+            user_form_dict = {
+                'nid': obj.nid,
+                'username': obj.username,
+                'email': obj.email
+            }
             self.session['is_login'] = True
-            self.session['user_info'] = obj.__dict__
+            # 这里切换到memcache缓存是需要修改，因为json不支持日期格式的转化
+            self.session['user_info'] = user_form_dict
             rep.status = True
         else:
             rep.message = form._error_dict
