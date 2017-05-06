@@ -51,9 +51,9 @@ class LoginHandler(BaseRequestHandler):
                 return
 
             user_form_dict = {
-                'nid': obj.nid,
-                'username': obj.username,
-                'email': obj.email
+                "nid": obj.nid,
+                "username": obj.username,
+                "email": obj.email,
             }
             self.session['is_login'] = True
             # 这里切换到memcache缓存是需要修改，因为json不支持日期格式的转化

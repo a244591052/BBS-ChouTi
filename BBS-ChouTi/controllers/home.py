@@ -17,17 +17,33 @@ from backend.utils import decrator
 from backend.utils.response import BaseResponse
 from backend.utils.response import StatusCodeEnum
 from sqlalchemy import and_, or_
+import redis
+pool = redis.ConnectionPool(host='127.0.0.1',port=6379)
+r = redis.Redis(connection_pool=pool)
+
+def Redis_cache(func):
+    def inner(self, *args, **kwargs):
+        ret = r.get("index")
+        if ret:
+            self.write(ret)
+            return
+        func(self, *args, **kwargs)
+        r.set('index', self._response_html, ex=10)
+    return inner
 
 
 class IndexHandler(BaseRequestHandler):
+
+    @Redis_cache
     def get(self, page=1):
 
+        current_time = time.time()
         conn = ORM.session()
 
         all_count = conn.query(ORM.News).count()
 
         obj = Pagination(page, all_count)
-
+        # print(self.session['user_info'],type(self.session['user_info']))
         current_user_id = self.session['user_info']['nid'] if self.session['is_login'] else 0
         result = conn.query(ORM.News.nid,
                             ORM.News.title,
@@ -43,7 +59,8 @@ class IndexHandler(BaseRequestHandler):
 
         str_page = obj.string_pager('/index/')
 
-        self.render('home/index.html', str_page=str_page, news_list=result)
+        self.render('home/index.html', str_page=str_page, news_list=result, current_time = current_time)
+
 
     @decrator.auth_login_json
     def post(self, *args, **kwargs):
